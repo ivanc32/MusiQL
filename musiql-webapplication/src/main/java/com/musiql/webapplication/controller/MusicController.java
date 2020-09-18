@@ -31,7 +31,7 @@ public class MusicController {
     }
 
     @GetMapping("/artist")
-    public ResponseEntity<List<ArtistDto>> getArtists(@RequestParam String artistName) {
+    public ResponseEntity<ArtistDto> getArtists(@RequestParam String artistName) {
         return musicService.getArtists(artistName);
     }
 }

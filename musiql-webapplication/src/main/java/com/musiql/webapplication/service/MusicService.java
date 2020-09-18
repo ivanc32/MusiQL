@@ -11,7 +11,7 @@ public interface MusicService {
 
     ResponseEntity<List<SongDto>> getSongs(String songName);
 
-    ResponseEntity<List<ArtistDto>> getArtists(String artistName);
+    ResponseEntity<ArtistDto> getArtists(String artistName);
 
     ResponseEntity<List<AlbumDto>> getAlbums(String albumName);
 }
