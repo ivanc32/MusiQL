@@ -26,12 +26,12 @@ public class MusicController {
     }
 
     @GetMapping("/album")
-    public ResponseEntity<List<AlbumDto>> getAlbums(@RequestParam String albumName) {
-        return musicService.getAlbums(albumName);
+    public ResponseEntity<AlbumDto> getAlbums(@RequestParam String albumName) {
+        return musicService.getAlbum(albumName);
     }
 
     @GetMapping("/artist")
     public ResponseEntity<ArtistDto> getArtists(@RequestParam String artistName) {
-        return musicService.getArtists(artistName);
+        return musicService.getArtist(artistName);
     }
 }

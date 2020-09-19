@@ -26,8 +26,8 @@ public class MusicServiceImpl implements MusicService {
     private MusicRepository repository;
 
     @Override
-    public ResponseEntity<ArtistDto> getArtists(String artistName) {
-        Model model = repository.getArtistModel(artistName);
+    public ResponseEntity<ArtistDto> getArtist(String artistName) {
+        Model model = repository.getModel(artistName);
         ArtistDto artist = ArtistDto.builder().build();
 
         String resURL = "http://dbpedia.org/data/XXX.ttl"
@@ -53,41 +53,11 @@ public class MusicServiceImpl implements MusicService {
                     .getObject().toString().substring(0, 4));
         }
 
-        artist.setArtists(new ArrayList<>());
-        StmtIterator activeMembers = performer.listProperties(new PropertyImpl("http://dbpedia.org/ontology/bandMember"));
-        if (activeMembers.hasNext()) {
-            while (activeMembers.hasNext()) {
-                Statement member = activeMembers.nextStatement();
-                String fullUrl = member.getObject().toString();
-                String[] stringSplit = fullUrl.split("/");
-                System.out.println(stringSplit[stringSplit.length - 1]);
-                artist.getArtists().add(stringSplit[stringSplit.length - 1].replace("_", " "));
-            }
-        }
+        artist.setArtists(propertyListToString("http://dbpedia.org/ontology/bandMember", performer));
 
-        artist.setGenre(new ArrayList<>());
-        StmtIterator genres = performer.listProperties(new PropertyImpl("http://dbpedia.org/ontology/genre"));
-        if (genres.hasNext()) {
-            while (genres.hasNext()) {
-                Statement genre = genres.nextStatement();
-                String fullUrl = genre.getObject().toString();
-                String[] stringSplit = fullUrl.split("/");
-                System.out.println(stringSplit[stringSplit.length - 1]);
+        artist.setGenres(propertyListToString("http://dbpedia.org/ontology/genre", performer));
 
-                artist.getGenre().add(stringSplit[stringSplit.length - 1].replace("_", " "));
-            }
-        }
-
-        artist.setRecordLabel(new ArrayList<>());
-        StmtIterator recordLabels = performer.listProperties(new PropertyImpl("http://dbpedia.org/ontology/recordLabel"));
-        if (recordLabels.hasNext()) {
-            while (recordLabels.hasNext()) {
-                Statement recordLabel = recordLabels.nextStatement();
-                String fullUrl = recordLabel.getObject().toString();
-                String[] ss = fullUrl.split("/");
-                artist.getRecordLabel().add(ss[ss.length - 1].replace("_", " "));
-            }
-        }
+        artist.setRecordLabel(propertyListToString("http://dbpedia.org/ontology/recordLabel", performer));
 
         artist.setThumbnail(performer.getProperty(FOAF.depiction).getObject().toString());
 
@@ -106,7 +76,64 @@ public class MusicServiceImpl implements MusicService {
     }
 
     @Override
-    public ResponseEntity<List<AlbumDto>> getAlbums(String albumName) {
-        return null;
+    public ResponseEntity<AlbumDto> getAlbum(String albumName) {
+        Model model = repository.getModel(albumName);
+        AlbumDto album = AlbumDto.builder().build();
+
+        String resURL = "http://dbpedia.org/data/XXX.ttl"
+                .replace("XXX", albumName)
+                .replace("data", "resource")
+                .replace(".ttl", "");
+
+        Resource albumResource = model.getResource(resURL);
+
+        album.setName(albumName.replace("_", " "));
+
+        album.setDescription("");
+        if (albumResource.hasProperty(new PropertyImpl("http://dbpedia.org/ontology/abstract"))) {
+            album.setDescription(albumResource.getProperty(new PropertyImpl("http://dbpedia.org/ontology/abstract"))
+                    .getObject().toString());
+        }
+
+        album.setReleaseDate("");
+        if (albumResource.hasProperty(new PropertyImpl("http://dbpedia.org/ontology/releaseDate"))) {
+            album.setReleaseDate(albumResource.getProperty(new PropertyImpl("http://dbpedia.org/ontology/releaseDate"))
+                    .getObject().toString());
+        }
+
+        album.setThumbnail("");
+        if (albumResource.hasProperty(new PropertyImpl("http://dbpedia.org/ontology/thumbnail"))) {
+            album.setThumbnail(albumResource.getProperty(new PropertyImpl("http://dbpedia.org/ontology/thumbnail"))
+                    .getObject().toString());
+        }
+
+        album.setRuntime("");
+        if (albumResource.hasProperty(new PropertyImpl("http://dbpedia.org/ontology/Work/runtime"))) {
+            album.setRuntime(albumResource.getProperty(new PropertyImpl("http://dbpedia.org/ontology/Work/runtime"))
+                    .getObject().toString());
+        }
+
+        album.setArtists(propertyListToString("http://dbpedia.org/ontology/artist", albumResource));
+        album.setGenres(propertyListToString("http://dbpedia.org/ontology/genre", albumResource));
+        album.setGenres(propertyListToString("http://dbpedia.org/ontology/genre", albumResource));
+        album.setSongs(repository.getSongsOfAlbum(resURL));
+
+        return new ResponseEntity<AlbumDto>(album, HttpStatus.ACCEPTED);
+    }
+
+    private List<String> propertyListToString(String url, Resource resource) {
+        ArrayList<String> result = new ArrayList<>();
+
+        StmtIterator iterator = resource.listProperties(new PropertyImpl(url));
+        if (iterator.hasNext()) {
+            while (iterator.hasNext()) {
+                Statement item = iterator.nextStatement();
+                String fullUrl = item.getObject().toString();
+                String[] stringSplit = fullUrl.split("/");
+                result.add(stringSplit[stringSplit.length - 1].replace("_", " "));
+            }
+        }
+
+        return result;
     }
 }

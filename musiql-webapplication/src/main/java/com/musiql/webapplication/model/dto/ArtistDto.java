@@ -17,7 +17,7 @@ public class ArtistDto {
 
     private String yearDisbanded;
 
-    private List<String> genre;
+    private List<String> genres;
 
     private List<String> recordLabel;
 
