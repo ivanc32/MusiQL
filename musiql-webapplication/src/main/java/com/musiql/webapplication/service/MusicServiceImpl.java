@@ -37,9 +37,11 @@ public class MusicServiceImpl implements MusicService {
 
         Resource performer = model.getResource(resURL);
 
-        artist.setName(artistName);
+        artist.setName(artistName.replace("_", " "));
 
-        artist.setBio(performer.getProperty(RDFS.comment, "en").getObject().toString());
+        if (performer.hasProperty(RDFS.comment)) {
+            artist.setBio(performer.getProperty(RDFS.comment, "en").getObject().toString());
+        }
 
         artist.setYearFounded("");
         if (performer.hasProperty(new PropertyImpl("http://dbpedia.org/ontology/activeYearsStartYear"))) {
@@ -67,7 +69,7 @@ public class MusicServiceImpl implements MusicService {
 
         artist.setAlbums(repository.getAlbumsOfArtist(artist.getName()));
 
-        return new ResponseEntity<ArtistDto>(artist, HttpStatus.ACCEPTED);
+        return new ResponseEntity<>(artist, HttpStatus.ACCEPTED);
     }
 
     @Override
@@ -98,7 +100,7 @@ public class MusicServiceImpl implements MusicService {
         album.setReleaseDate("");
         if (albumResource.hasProperty(new PropertyImpl("http://dbpedia.org/ontology/releaseDate"))) {
             album.setReleaseDate(albumResource.getProperty(new PropertyImpl("http://dbpedia.org/ontology/releaseDate"))
-                    .getObject().toString());
+                    .getObject().toString().replaceAll("\\^\\^.*", ""));
         }
 
         album.setThumbnail("");
@@ -110,15 +112,15 @@ public class MusicServiceImpl implements MusicService {
         album.setRuntime("");
         if (albumResource.hasProperty(new PropertyImpl("http://dbpedia.org/ontology/Work/runtime"))) {
             album.setRuntime(albumResource.getProperty(new PropertyImpl("http://dbpedia.org/ontology/Work/runtime"))
-                    .getObject().toString());
+                    .getObject().toString().replaceAll("\\^\\^.*", ""));
         }
 
         album.setArtists(propertyListToString("http://dbpedia.org/ontology/artist", albumResource));
         album.setGenres(propertyListToString("http://dbpedia.org/ontology/genre", albumResource));
-        album.setGenres(propertyListToString("http://dbpedia.org/ontology/genre", albumResource));
+        album.setProducers(propertyListToString("http://dbpedia.org/ontology/producer", albumResource));
         album.setSongs(repository.getSongsOfAlbum(resURL));
 
-        return new ResponseEntity<AlbumDto>(album, HttpStatus.ACCEPTED);
+        return new ResponseEntity<>(album, HttpStatus.ACCEPTED);
     }
 
     private List<String> propertyListToString(String url, Resource resource) {
